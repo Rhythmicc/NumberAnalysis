@@ -12,7 +12,7 @@
 #define MALLOC(p,type,n) type*p = (type*)malloc(sizeof(type)*n)
 
 float func(float x){
-    return sqrt(1.0 - (x-1)*(x-1));
+    return sqrt(1.0 - x*x);
 }
 
 float midpoint_2017011344(float(*func)(float), float a, float b, int nseg) {
@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
     const float PI = acosf(-1);
     printf("| Function\t| Result\t| Error  \t|\n");
     for (int mode = 0; mode < 6; ++mode) {
-        float res = 2 * funcs[mode](func, 0, 2, nseg);
+        float res = 2 * funcs[mode](func, -1, 1, nseg);
         float error = fabsf(PI - res);
         printf("| \033[1;31m%-10s\033[0m\t| \033[1;31m%f\033[0m\t| \033[1;31m%f\033[0m\t|\n", func_names[mode],
                res, error);

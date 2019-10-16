@@ -2,4 +2,4 @@ compile_tool,gcc -std=c11,
 compile_filename,main.c
 executable_filename,cmake-build-debug/NumberAnalysis
 input_file,cmake-build-debug/input.txt
-template_file,template/main
+template_root,template/

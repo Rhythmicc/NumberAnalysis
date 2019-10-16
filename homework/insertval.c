@@ -68,11 +68,11 @@ float polynomial(float*in, float*fin, float x, int n) {
     return res;
 }
 
-float lagrange(float*in, float*fin, float x, int n){
-    float res=0;
-    for(int i=0;i<n;++i){
+float lagrange(float*in, float*fin, float x, int n) {
+    float res = 0;
+    for (int i = 0; i < n; ++i) {
         float prod = 1;
-        for(int j=0;j<n;++j)if(i!=j)prod *= (x-in[j]) / (in[i]-in[j]);
+        for (int j = 0; j < n; ++j)if (i != j)prod *= (x - in[j]) / (in[i] - in[j]);
         res += fin[i] * prod;
     }
     return res;
