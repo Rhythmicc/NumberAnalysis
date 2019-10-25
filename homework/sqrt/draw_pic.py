@@ -14,7 +14,7 @@ def main():
     ax.plot_surface(x, y, np.sin(z), cmap='rainbow')
     ax.grid(linestyle='-.')
     plt.title('$sin(\sqrt{x^2+y^2})$')
-    plt.savefig('img/sqrt_homework.png')
+    plt.savefig('sqrt_homework.png')
     plt.show()
 
 
