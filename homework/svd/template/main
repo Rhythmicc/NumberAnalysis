@@ -159,8 +159,15 @@ void lanczos(float *A, float *U, float *sigma, float *V, int n) {
     qreigensolver(eigenvalues, eigenvector, T, n, 20, 0.000001);
     MALLOC(F, float, n * n);
     MALLOC(FT, float, n * n); /// -V
+    MALLOC(Ap, float, n * n);
+    MALLOC(golden, float, n * n); /// result
+    MALLOC(EV, float, n * n);
+    memset(EV, 0, sizeof(float) * n * n);
+    for (int i = 0; i < n - 1; i++)EV[pos(i, i)] = eigenvalues[i];
     matmat(F, VV, eigenvector, n, n, n);
     transpose(FT, F, n, n);
+    matmat(Ap, F, EV, n, n, n);
+    matmat(golden, Ap, FT, n, n, n);
     for (int i = 0; i < n; ++i)
         for (int j = 0; j < n; ++j) {
             eigenvector[pos(i, j)] = -eigenvector[pos(i, j)];
@@ -171,6 +178,7 @@ void lanczos(float *A, float *U, float *sigma, float *V, int n) {
     memcpy(V, FT, sizeof(float) * n * n);
     free(eigenvalues), free(eigenvector), free(T);
     free(VV), free(F), free(FT);
+    free(Ap), free(golden), free(EV);
 }
 
 void read_RGBA_to_float(unsigned *raw_img, int n){
@@ -186,6 +194,9 @@ void read_RGBA_to_float(unsigned *raw_img, int n){
 }
 
 void float_to_RGBA(unsigned *img, float*ret, int n){
+    /**
+     * ret = img*4
+     */
     int chan = n*n;
     for(int i=0;i<n;++i)
         for(int j=0;j<n;++j){
@@ -220,9 +231,12 @@ void lanczos_2017011344(unsigned *raw_img, unsigned *ret_img, int n, float rate)
     MALLOC(sigma, float, n);
     MALLOC(V, float, n * n);
     for (int k = 0; k < 4; ++k) {
-        memcpy(chan, RGBA + k * n * n, sizeof(float) * n * n);
-        if (k == 3)memcpy(ans, chan, sizeof(float) * n * n);
-        else {
+        if (k == 3) {
+            for (int i = 0; i < n; ++i)
+                for (int j = 0; j < n; ++j)
+                    ret_img[pos(i, j)] = (ret_img[pos(i, j)] << 8) + 220;
+        } else {
+            memcpy(chan, RGBA + k * n * n, sizeof(float) * n * n);
             lanczos(chan, U, sigma, V, n);
             float sum = 0, temp = 0;
             int n_sigma = 0;
@@ -233,20 +247,23 @@ void lanczos_2017011344(unsigned *raw_img, unsigned *ret_img, int n, float rate)
             for (int i = 0; i < n_sigma; ++i)tmp[i * n_sigma + i] = sigma[i];
             matmat(result, U, tmp, n, n_sigma, n_sigma);
             matmat(ans, result, V, n, n_sigma, n);
-            float mx = -1, mn = MAXFLOAT;
+            for(int i=0;i<n;++i)for(int j=0;j<n;++j)ans[pos(i,j)] = (int)ans[pos(i,j)] % 255;
             for (int i = 0; i < n; ++i)
                 for (int j = 0; j < n; ++j)
-                    mx = max(mx, ans[pos(i, j)]), mn = min(mn, ans[pos(i, j)]);
-            for (int i = 0; i < n; ++i)
-                for (int j = 0; j < n; ++j)
-                    ans[pos(i, j)] = (ans[pos(i, j)] - mn) / (mx - mn) * 255;
+                    ret_img[pos(i, j)] = (ret_img[pos(i, j)] << 8) + (int)ans[pos(i, j)];
             free(tmp);
         }
-        for (int i = 0; i < n; ++i)
-            for (int j = 0; j < n; ++j)
-                ret_img[pos(i, j)] = (ret_img[pos(i, j)] << 8) + (int) ans[pos(i, j)];
     }
     free(RGBA), free(chan), free(U), free(sigma), free(V), free(result), free(ans);
+}
+
+/// __TEMPLATE__
+void printmat(float *x, int n) {
+    for (int i = 0; i < n; ++i)for (int j = 0; j < n; ++j)printf("%f%c", x[pos(i, j)], j == n - 1 ? '\n' : ' ');
+}
+
+void printvec(float *x, int n) {
+    for (int i = 0; i < n; ++i)printf("%f%c", x[i], i == n - 1 ? '\n' : ' ');
 }
 
 int main(int argc, char **argv) {

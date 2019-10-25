@@ -53,40 +53,56 @@ void power(float*eigenvalues, float *A, int n, int maxiter, float threshold) {
     free(eigenvector);
 }
 
-void gramschmidt(float*V,float*X,int m,int n){
-    MALLOC(sum,float,n);
-    for(int i=0;i<m;++i){
-        float*vi = V + pos(i,0);
-        float*xi = X + pos(i,0);
-        memset(sum,0, sizeof(float)*n);
-        for(int j=0;j<i;++j){
-            float*vj = V + pos(j,0);
-            float dp1 = dotproduct(xi,vj,n);
-            float dp2 = dotproduct(vj,vj,n);
-            for(int k=0;k<n;++k){
-                sum[k] += (dp1/dp2)*vj[k];
+void gramschmidt(float *V, float *X, int m, int n) {
+    MALLOC(sum, float, n);
+    for (int i = 0; i < m; ++i) {
+        float *vi = V + pos(i, 0);
+        float *xi = X + pos(i, 0);
+        memset(sum, 0, sizeof(float) * n);
+        for (int j = 0; j < i; ++j) {
+            float *vj = V + pos(j, 0);
+            float dp1 = dotproduct(xi, vj, n);
+            float dp2 = dotproduct(vj, vj, n);
+            for (int k = 0; k < n; ++k) {
+                sum[k] += (dp1 / dp2) * vj[k];
             }
         }
-        for(int k=0;k<n;++k)vi[k] = xi[k] - sum[k];
+        for (int k = 0; k < n; ++k)vi[k] = xi[k] - sum[k];
     }
     free(sum);
 }
 
-void T(float*AT,float*A,int m,int n){
-    for(int i=0;i<m;++i)for(int j=0;j<n;++j)AT[j*m+i] = A[i*n+j];
+void transpose(float *AT, float *A, int m, int n) {
+    for (int i = 0; i < m; i++)
+        for (int j = 0; j < n; j++)
+            AT[j * m + i] = A[i * n + j];
 }
 
-void matmat_transA(float*C,float*AT,float*B,int m,int n,int k){
-    memset(C,0, sizeof(float)*n*m);
-    for(int i=0;i<n;++i)for(int j=0;j<n;++j)for(int l=0;l<k;++l)C[pos(i,j)] += AT[l*m+i] * B[l*n+j];
+void matmat(float *C, float *A, float *B, int m, int k, int n) {
+    memset(C, 0, sizeof(float) * m * n);
+    for (int i = 0; i < m; i++)
+        for (int j = 0; j < n; j++)
+            for (int kk = 0; kk < k; kk++)
+                C[i * n + j] += A[i * k + kk] * B[kk * n + j];
 }
 
-void matmat_transB(float*C,float*A,float*BT,int m,int n,int k) {
-    memset(C,0, sizeof(float)*n*m);
-    for(int i=0;i<n;++i)for(int j=0;j<n;++j)for(int l=0;l<k;++l)C[pos(i,j)] += A[i*k+l] * BT[j*k+l];
+void matmat_transA(float *C, float *AT, float *B, int m, int k, int n) {
+    memset(C, 0, sizeof(float) * m * n);
+    for (int i = 0; i < m; i++)
+        for (int j = 0; j < n; j++)
+            for (int kk = 0; kk < k; kk++)
+                C[i * n + j] += AT[kk * m + i] * B[kk * n + j];
 }
 
-void qr(float*Q,float*R,float*A,int m,int n) {
+void matmat_transB(float *C, float *A, float *BT, int m, int k, int n) {
+    memset(C, 0, sizeof(float) * m * n);
+    for (int i = 0; i < m; i++)
+        for (int j = 0; j < n; j++)
+            for (int kk = 0; kk < k; kk++)
+                C[i * n + j] += A[i * k + kk] * BT[j * k + kk];
+}
+
+void qr(float *Q, float *R, float *A, int m, int n) {
     gramschmidt(Q, A, m, n);
     for (int i = 0; i < n; ++i) {
         float *qi = Q + pos(i, 0);
@@ -94,12 +110,12 @@ void qr(float*Q,float*R,float*A,int m,int n) {
         for (int j = 0; j < n; ++j)qi[j] /= norm;
     }
     MALLOC(QT, float, m * n);
-    T(QT, Q, m, n);
+    transpose(QT, Q, m, n);
     matmat_transA(R, QT, A, m, n, n);
     free(QT);
 }
 
-void qreigensolver(float*eigenvalues, float *A, int n, int maxiter, float threshold) {
+void qreigensolver(float *eigenvalue, float *A, int n, int maxiter, float threshold) {
     MALLOC(Ai, float, n * n);
     MALLOC(Ai_new, float, n * n);
     MALLOC(Q, float, n * n);
@@ -109,14 +125,16 @@ void qreigensolver(float*eigenvalues, float *A, int n, int maxiter, float thresh
     int iter = 0;
     float errornorm = 0;
     do {
+        memset(Q, 0, sizeof(float) * n * n);
+        memset(R, 0, sizeof(float) * n * n);
         qr(Q, R, Ai, n, n);
         matmat_transB(Ai_new, R, Q, n, n, n);
-        for (int i = 0; i < n; ++i)error[i] = Ai_new[i * n + i] - Ai[i * n + i];
+        for (int i = 0; i < n; i++) error[i] = Ai_new[pos(i, i)] - Ai[pos(i, i)];
         errornorm = vec2norm(error, n);
         memcpy(Ai, Ai_new, sizeof(float) * n * n);
-        ++iter;
+        iter++;
     } while (iter < maxiter && errornorm > threshold);
-    for (int i = 0; i < n; ++i)eigenvalues[i] = Ai_new[pos(i, i)];
+    for (int i = 0; i < n; i++) eigenvalue[i] = Ai_new[i * n + i];
     free(Ai), free(Ai_new), free(Q), free(R), free(error);
 }
 
@@ -130,6 +148,6 @@ int main(int argc, char **argv) {
     float *eigenvalues = (float*)malloc(sizeof(float)*n);
     for(int i=0;i<n;++i)for(int j=0;j<n;++j)scanf("%f",A+pos(i,j));
     func[mode](eigenvalues,A,n,1000,1e-5f);
-    for(int i=0;i<n;++i)printf("%f%c",eigenvalues[i],i==n-1?'\n':' ');ß
+    for(int i=0;i<n;++i)printf("%f%c",eigenvalues[i],i==n-1?'\n':' ');
     return 0;
 }

@@ -1,0 +1,5 @@
+compile_tool,gcc -std=c11,
+compile_filename,svd.c
+executable_filename,./svd
+input_file,./img_data.txt
+template_root,template/
