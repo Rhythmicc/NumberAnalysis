@@ -224,7 +224,19 @@ void lanczos_2017011344(unsigned *raw_img, unsigned *ret_img, int n, float rate)
         memcpy(chan, RGBA + k * n * n, sizeof(float) * n * n);
         if (k == 3)memcpy(ans, chan, sizeof(float) * n * n);
         else {
+            matmat_transB(result, chan, chan, n, n, n);
             lanczos(chan, U, sigma, V, n);
+            MALLOC(tmp_sigma, float, n);
+            memcpy(tmp_sigma, sigma, sizeof(float) * n);
+
+            lanczos(result, U, sigma, V, n);
+            memcpy(ans, U, sizeof(float) *n *n);
+
+            matmat_transA(result, chan, chan, n, n, n);
+            lanczos(result, V, sigma, U, n);
+            memcpy(U, ans, sizeof(float)*n*n);
+            memcpy(sigma, tmp_sigma, sizeof(float)*n);
+
             float sum = 0, temp = 0;
             int n_sigma = 0;
             for (int i = 0; i < n; ++i)sum += sigma[i];
@@ -241,7 +253,7 @@ void lanczos_2017011344(unsigned *raw_img, unsigned *ret_img, int n, float rate)
             for (int i = 0; i < n; ++i)
                 for (int j = 0; j < n; ++j)
                     ans[pos(i, j)] = (ans[pos(i, j)] - mn) / (mx - mn) * 255;
-            free(tmp);
+            free(tmp_sigma), free(tmp);
         }
         for (int i = 0; i < n; ++i)
             for (int j = 0; j < n; ++j)

@@ -21,7 +21,6 @@ def compress_image(origin_image, rate=0.8):
         result[:, :, i] = (result[:, :, i] - MIN) / (MAX - MIN)
     result = np.round(result * 255).astype('int')
     result[:, :, -1] = origin_image[:, :, -1]
-    out_img_data(result, 'img2.txt')
     plt.subplot(1, 3, 3)
     plt.imshow(result)
     plt.title('compress by python')
