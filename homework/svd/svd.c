@@ -156,7 +156,7 @@ void lanczos(float *A, float *U, float *sigma, float *V, int n) {
     tridiagonalization(A, T, VV, n);
     MALLOC(eigenvalues, float, n); /// sigma
     MALLOC(eigenvector, float, n * n); /// -U
-    qreigensolver(eigenvalues, eigenvector, T, n, 20, 0.000001);
+    qreigensolver(eigenvalues, eigenvector, T, n, 20, 1e-5f);
     MALLOC(F, float, n * n);
     MALLOC(FT, float, n * n); /// -V
     matmat(F, VV, eigenvector, n, n, n);
@@ -173,10 +173,11 @@ void lanczos(float *A, float *U, float *sigma, float *V, int n) {
     free(VV), free(F), free(FT);
 }
 
-void read_RGBA_to_float(unsigned *raw_img, int n){
+void read_RGBA_to_float(unsigned *raw_img, int n) {
     unsigned val = 0;
     unsigned pixel;
-    for(int i=0;i<n;++i)for(int j=0;j<n;++j) {
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < n; ++j) {
             for (int k = 0; k < 4; ++k) {
                 scanf("%u", &pixel);
                 val = (val << 8) | pixel;
@@ -185,28 +186,28 @@ void read_RGBA_to_float(unsigned *raw_img, int n){
         }
 }
 
-void float_to_RGBA(unsigned *img, float*ret, int n){
-    int chan = n*n;
-    for(int i=0;i<n;++i)
-        for(int j=0;j<n;++j){
-            unsigned pixel = img[pos(i,j)];
-            for(int k=3;k>=0;--k){
-                ret[k*chan + pos(i,j)] = pixel & 0xff;
+void float_to_RGBA(unsigned *img, float *ret, int n) {
+    int chan = n * n;
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < n; ++j) {
+            unsigned pixel = img[pos(i, j)];
+            for (int k = 3; k >= 0; --k) {
+                ret[k * chan + pos(i, j)] = pixel & 0xff;
                 pixel >>= 8;
             }
         }
 }
 
-void write_float_to_RGBA(unsigned*img, int n){
+void write_float_to_RGBA(unsigned *img, int n) {
     for (int i = 0; i < n; ++i)
-        for (int j = 0; j < n; ++j){
-            unsigned pixel = img[pos(i,j)];
+        for (int j = 0; j < n; ++j) {
+            unsigned pixel = img[pos(i, j)];
             unsigned vector[4];
-            for(int k=3;k>=0;--k){
+            for (int k = 3; k >= 0; --k) {
                 vector[k] = pixel & 0xff;
                 pixel >>= 8;
             }
-            for(int k=0;k<4;++k)printf("%d%c",vector[k], j==n-1 && k==3?'\n':' ');
+            for (int k = 0; k < 4; ++k)printf("%d%c", vector[k], j == n - 1 && k == 3 ? '\n' : ' ');
         }
 }
 
@@ -250,15 +251,15 @@ void lanczos_2017011344(unsigned *raw_img, unsigned *ret_img, int n, float rate)
 }
 
 int main(int argc, char **argv) {
-    int n,m;
-    scanf("%d%d",&n,&m);
-    if(n!=m)return -1;
-    MALLOC(img, unsigned, n*n);
-    MALLOC(ret, unsigned , n*n);
+    int n, m;
+    scanf("%d%d", &n, &m);
+    if (n != m)return -1;
+    MALLOC(img, unsigned, n * n);
+    MALLOC(ret, unsigned, n * n);
     read_RGBA_to_float(img, n);
     lanczos_2017011344(img, ret, n, 0.8);
     printf("%d %d\n", n, m);
     write_float_to_RGBA(ret, n);
-    free(img),free(ret);
+    free(img), free(ret);
     return 0;
 }

@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def compress_image(origin_image, rate=0.8, compress_alpha=False):
+def compress_image(origin_image, rate=0.8):
     result = np.zeros(origin_image.shape)
-    for chan in range(4):
+    for chan in range(3):
         U, sigma, V = np.linalg.svd(origin_image[:, :, chan])
         n_sigmas = 0
         temp = 0
@@ -15,28 +15,30 @@ def compress_image(origin_image, rate=0.8, compress_alpha=False):
         for i in range(n_sigmas):
             S[i, i] = sigma[i]
         result[:, :, chan] = (U[:, 0:n_sigmas].dot(S)).dot(V[0:n_sigmas, :])
-    for i in range(4 if compress_alpha else 3):
+    for i in range(3):
         MAX = np.max(result[:, :, i])
         MIN = np.min(result[:, :, i])
         result[:, :, i] = (result[:, :, i] - MIN) / (MAX - MIN)
     result = np.round(result * 255).astype('int')
+    result[:, :, -1] = origin_image[:, :, -1]
+    out_img_data(result, 'img2.txt')
     plt.subplot(1, 3, 3)
     plt.imshow(result)
     plt.title('compress by python')
 
 
-def out_img_data(origin_image):
-    with open('img_data.txt', 'w') as f:
-        f.write("%d %d\n" % (origin_image.shape[0], origin_image.shape[1]))
-        for i in range(origin_image.shape[0]):
-            for j in range(origin_image.shape[1]):
+def out_img_data(img, filepath):
+    with open(filepath, 'w') as f:
+        f.write("%d %d\n" % (img.shape[0], img.shape[1]))
+        for i in range(img.shape[0]):
+            for j in range(img.shape[1]):
                 for chan in range(4):
                     f.write("%d%s" % (
-                        origin_image[i, j, chan], '\n' if j == origin_image.shape[1] - 1 and chan == 3 else ' '))
+                        img[i, j, chan], '\n' if j == img.shape[1] - 1 and chan == 3 else ' '))
 
 
-def read_and_show():
-    with open("img.txt", 'r') as f:
+def read_and_show(filepath):
+    with open(filepath, 'r') as f:
         content = [int(i) for i in f.read().split()]
         n, m = content[:2]
     content = np.array(content[2:]).reshape((n, m, 4))
@@ -52,7 +54,7 @@ def main():
     plt.subplot(1, 3, 1)
     plt.imshow(origin_image)
     plt.title('origin')
-    read_and_show()
+    read_and_show('img.txt')
     compress_image(origin_image, rate=0.8)
     plt.savefig('result.png')
     plt.show()
