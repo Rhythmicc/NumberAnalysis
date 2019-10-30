@@ -53,11 +53,13 @@ CMAKE_BINARY_DIR = /Users/lianhaocheng/CLionProjects/NumberAnalysis/cmake-build-
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
+all: CMakeFiles/final.dir/all
 all: CMakeFiles/NumberAnalysis.dir/all
 
 .PHONY : all
 
 # The main recursive "clean" target.
+clean: CMakeFiles/final.dir/clean
 clean: CMakeFiles/NumberAnalysis.dir/clean
 
 .PHONY : clean
@@ -66,6 +68,33 @@ clean: CMakeFiles/NumberAnalysis.dir/clean
 preinstall:
 
 .PHONY : preinstall
+
+#=============================================================================
+# Target rules for target CMakeFiles/final.dir
+
+# All Build rule for target.
+CMakeFiles/final.dir/all:
+	$(MAKE) -f CMakeFiles/final.dir/build.make CMakeFiles/final.dir/depend
+	$(MAKE) -f CMakeFiles/final.dir/build.make CMakeFiles/final.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/Users/lianhaocheng/CLionProjects/NumberAnalysis/cmake-build-debug/CMakeFiles --progress-num=3,4 "Built target final"
+.PHONY : CMakeFiles/final.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/final.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/lianhaocheng/CLionProjects/NumberAnalysis/cmake-build-debug/CMakeFiles 2
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/final.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/lianhaocheng/CLionProjects/NumberAnalysis/cmake-build-debug/CMakeFiles 0
+.PHONY : CMakeFiles/final.dir/rule
+
+# Convenience name for target.
+final: CMakeFiles/final.dir/rule
+
+.PHONY : final
+
+# clean rule for target.
+CMakeFiles/final.dir/clean:
+	$(MAKE) -f CMakeFiles/final.dir/build.make CMakeFiles/final.dir/clean
+.PHONY : CMakeFiles/final.dir/clean
 
 #=============================================================================
 # Target rules for target CMakeFiles/NumberAnalysis.dir

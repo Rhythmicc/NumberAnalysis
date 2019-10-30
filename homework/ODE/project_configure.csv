@@ -1,0 +1,5 @@
+compile_tool,gcc -std=c11,
+compile_filename,ODE.c
+executable_filename,dist/ODE
+input_file,dist/input.txt
+template_root,template/

@@ -111,6 +111,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named final
+
+# Build rule for target.
+final: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 final
+.PHONY : final
+
+# fast build rule for target.
+final/fast:
+	$(MAKE) -f CMakeFiles/final.dir/build.make CMakeFiles/final.dir/build
+.PHONY : final/fast
+
+#=============================================================================
 # Target rules for targets named NumberAnalysis
 
 # Build rule for target.
@@ -122,6 +135,33 @@ NumberAnalysis: cmake_check_build_system
 NumberAnalysis/fast:
 	$(MAKE) -f CMakeFiles/NumberAnalysis.dir/build.make CMakeFiles/NumberAnalysis.dir/build
 .PHONY : NumberAnalysis/fast
+
+final/main.o: final/main.c.o
+
+.PHONY : final/main.o
+
+# target to build an object file
+final/main.c.o:
+	$(MAKE) -f CMakeFiles/final.dir/build.make CMakeFiles/final.dir/final/main.c.o
+.PHONY : final/main.c.o
+
+final/main.i: final/main.c.i
+
+.PHONY : final/main.i
+
+# target to preprocess a source file
+final/main.c.i:
+	$(MAKE) -f CMakeFiles/final.dir/build.make CMakeFiles/final.dir/final/main.c.i
+.PHONY : final/main.c.i
+
+final/main.s: final/main.c.s
+
+.PHONY : final/main.s
+
+# target to generate assembly for a file
+final/main.c.s:
+	$(MAKE) -f CMakeFiles/final.dir/build.make CMakeFiles/final.dir/final/main.c.s
+.PHONY : final/main.c.s
 
 main.o: main.c.o
 
@@ -158,7 +198,11 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
+	@echo "... final"
 	@echo "... NumberAnalysis"
+	@echo "... final/main.o"
+	@echo "... final/main.i"
+	@echo "... final/main.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
