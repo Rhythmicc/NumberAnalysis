@@ -1,0 +1,249 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <sys/time.h>
+#include "csr_sparse.h"
+#include <pthread.h>
+
+void matvec(float *A, float *x, float *y, int m, int n) {
+    for (int i = 0; i < m; ++i) {
+        y[i] = 0;
+        for (int j = 0; j < n; ++j)
+            y[i] += A[i * n + j] * x[j];
+    }
+}
+
+void matmat(float *C, float *A, float *B, int m, int k, int n) {
+    memset(C, 0, sizeof(float) * m * n);
+    for (int i = 0; i < m; ++i)
+        for (int j = 0; j < n; ++j)
+            for (int kk = 0; kk < k; ++kk)
+                C[i * n + j] += A[i * k + kk] * B[kk * n + j];
+}
+
+void matmat_transB(float *C, float *A, float *BT, int m, int k, int n) {
+    memset(C, 0, sizeof(float) * m * n);
+    for (int i = 0; i < m; ++i)
+        for (int j = 0; j < n; ++j)
+            for (int kk = 0; kk < k; ++kk)
+                C[i * n + j] += A[i * k + kk] * BT[j * k + kk];
+}
+
+float dotproduct(float *vec1, float *vec2, int n) {
+    float result = 0;
+    for (int i = 0; i < n; ++i)
+        result += vec1[i] * vec2[i];
+    return result;
+}
+
+// A is m x n, AT is n x m
+void transpose(float *AT, float *A, int m, int n) {
+    for (int i = 0; i < m; ++i)
+        for (int j = 0; j < n; ++j)
+            AT[j * m + i] = A[i * n + j];
+}
+
+float vec2norm(float *x, int n) {
+    float sum = 0;
+    for (int i = 0; i < n; ++i)
+        sum += x[i] * x[i];
+    return sqrt(sum);
+}
+
+void cg(float *A, float *x, float *b, int n, int maxiter, float threshold) {
+    size_t sz = sizeof(float) * n;
+    memset(x, 0, sz);
+    float *residual = (float*)malloc(sz), *y = (float*)malloc(sz), *p = (float*)malloc(sz), *q = (float*)malloc(sz);
+    int iter = 0;
+    float rho = 0, rho_1 = 0;
+    matvec(A, x, y, n, n);
+    for (int i = 0; i < n; ++i)residual[i] = b[i] - y[i];
+    do {
+        rho = dotproduct(residual, residual, n);
+        if (rho < threshold)break;
+        if (iter) {
+            float beta = rho / rho_1;
+            for (int i = 0; i < n; ++i)p[i] = residual[i] + beta * p[i];
+        } else memcpy(p, residual, sz);
+        matvec(A, p, q, n, n);
+        float alpha = rho / dotproduct(p, q, n);
+        if (isnormal(alpha)) {
+            for (int i = 0; i < n; ++i)x[i] += alpha * p[i];
+            for (int i = 0; i < n; ++i)residual[i] -= alpha * q[i];
+        }
+        rho_1 = rho;
+        //if (vec2norm(residual,n) < threshold)break;
+    } while (++iter < maxiter);
+    free(residual), free(y), free(p), free(q);
+}
+
+const ul block=128;
+#define range(i, a, b) for(vector**i=a;i<b;++i)
+typedef struct {
+    csr_matrix *csr;
+    float *X, *Y;
+    int f;
+    float lamda;
+    double *time_prepareA, *time_prepareb, *time_solver;
+    ul block_id;
+}thread_data;
+
+void*cal_one_block(void*data) {
+    thread_data *params = (thread_data *) data;
+    ul real_m = params->csr->m / block;
+    vector **start = params->csr->src + (params->block_id) * real_m;
+    vector **end = min(params->csr->src + (params->block_id + 1) * real_m, params->csr->src + params->csr->m);
+    if(start>=end)return NULL;
+    struct timeval t1, t2;
+    float *smat = (float *) malloc(sizeof(float) * params->f * params->f);
+    float *svec = (float *) malloc(sizeof(float) * params->f);
+    int mxnzr = 0;
+    anyrow_of_csr(params->csr, i)mxnzr = max(mxnzr, (*i)->len);
+    float *sY = (float *) malloc(sizeof(float) * mxnzr * params->f);
+    float *sYT = (float *) malloc(sizeof(float) * mxnzr * params->f);
+    float *ru = (float *) malloc(sizeof(float) * mxnzr);
+    double a = 0, b = 0, c = 0;
+    range(u, start, end) {
+        gettimeofday(&t1, NULL);
+        float *xu = params->X + indx_of_iter(params->csr, u) * params->f;
+        vector *this_vec = *u;
+        int nzr = this_vec->len;
+        float *rup = ru;
+        int count = 0;
+        any_of_vector(this_vec, j)*(rup++) = j->val;
+        any_of_vector(this_vec, j)
+            memcpy(&sY[(count++) * params->f], &params->Y[j->id * params->f], sizeof(float) * params->f);
+        transpose(sYT, sY, nzr, params->f);
+        matmat(smat, sYT, sY, params->f, nzr, params->f);
+        for (int i = 0; i < params->f; ++i)
+            smat[i * params->f + i] += params->lamda;
+        gettimeofday(&t2, NULL);
+        a += ((t2.tv_sec - t1.tv_sec) * 1000.0 + (t2.tv_usec - t1.tv_usec) / 1000.0) / block;
+        gettimeofday(&t1, NULL);
+        matvec(sYT, ru, svec, params->f, nzr);
+        gettimeofday(&t2, NULL);
+        b += ((t2.tv_sec - t1.tv_sec) * 1000.0 + (t2.tv_usec - t1.tv_usec) / 1000.0) / block;
+        gettimeofday(&t1, NULL);
+        cg(smat, xu, svec, params->f, 100, 0.00001);
+        gettimeofday(&t2, NULL);
+        c += ((t2.tv_sec - t1.tv_sec) * 1000.0 + (t2.tv_usec - t1.tv_usec) / 1000.0) / block;
+    }
+    free(ru), free(sY), free(sYT), free(smat), free(svec);
+    *params->time_prepareA += a;
+    *params->time_prepareb += b;
+    *params->time_solver += c;
+    return NULL;
+}
+
+void update(csr_matrix *csr, float *X, float *Y, int f, float lamda,
+                    double *time_prepareA, double *time_prepareb, double *time_solver) {
+    pthread_t ls[block+1];
+    thread_data dts[block+1];
+    for(int i=0;i<block+1;++i){
+        dts[i].csr = csr;
+        dts[i].time_solver = time_solver;
+        dts[i].X = X;
+        dts[i].Y = Y;
+        dts[i].lamda = lamda;
+        dts[i].time_prepareA = time_prepareA;
+        dts[i].time_prepareb = time_prepareb;
+        dts[i].f = f;
+        dts[i].block_id = i;
+        pthread_create(ls + i, NULL, cal_one_block, (void *) (dts + i));
+    }
+    for(int i=0;i<block+1;++i)pthread_join(ls[i], NULL);
+}
+/// __TEMPLATE__
+
+void als_recsys(csr_matrix *csr, float *X, float *Y, int f, float lamda) {
+    // create YT and Rp
+    ul m = csr->m, n = csr->n;
+    csr_matrix *csc = new_csr_matrix(n, m);
+    csr_transpose(csc, csr);
+    vector *r = new_vector();
+    csr_to_vec(csr, r);
+    vector *rp = new_vector();
+    MALLOC(one_base_index, ul, csr->nnz + 1);
+    anyrow_of_csr(csr, i)any_of_vector((*i), j)one_base_index[++one_base_index[0]] = indx_of_iter(csr, i) * csr->n + (j->id);
+
+    int iter = 0, nnz = csr->nnz;
+    float error;
+    float error_old = 0.0;
+    float error_new;
+    struct timeval t1, t2;
+
+    double time_updatex_prepareA = 0;
+    double time_updatex_prepareb = 0;
+    double time_updatex_solver = 0;
+
+    double time_updatey_prepareA = 0;
+    double time_updatey_prepareb = 0;
+    double time_updatey_solver = 0;
+
+    double time_updatex = 0;
+    double time_updatey = 0;
+    double time_validate = 0;
+
+    do {
+        gettimeofday(&t1, NULL);
+        update(csr, X, Y, f, lamda, &time_updatex_prepareA, &time_updatex_prepareb, &time_updatex_solver);
+        gettimeofday(&t2, NULL);
+        time_updatex += (t2.tv_sec - t1.tv_sec) * 1000.0 + (t2.tv_usec - t1.tv_usec) / 1000.0;
+        gettimeofday(&t1, NULL);
+        update(csc, Y, X, f, lamda, &time_updatey_prepareA, &time_updatey_prepareb, &time_updatey_solver);
+        gettimeofday(&t2, NULL);
+        time_updatey += (t2.tv_sec - t1.tv_sec) * 1000.0 + (t2.tv_usec - t1.tv_usec) / 1000.0;
+        gettimeofday(&t1, NULL);
+        matmat_transB_to_vec(rp, X, Y, m, f, n, one_base_index);
+        pair *rv = r->src, *rpv = rp->src;
+        int cnt = r->len;
+        error_new = 0.0;
+        while (cnt--) {
+            VALUE_TYPE val = rpv->val - rv->val;
+            error_new += val * val;
+            ++rv;
+            ++rpv;
+        }
+        error_new = sqrt(error_new / nnz);
+        gettimeofday(&t2, NULL);
+        time_validate += (t2.tv_sec - t1.tv_sec) * 1000.0 + (t2.tv_usec - t1.tv_usec) / 1000.0;
+        error = fabs(error_new - error_old) / error_new;
+        error_old = error_new;
+        printf("iter = %i, error = %f, error_new = %f\n", iter, error, error_new);
+        ++iter;
+    } while (iter < 1000 && error > 0.0001 && error_new >= 0.794735);
+
+    printf("\nUpdate X %4.2f ms (prepare A %4.2f ms, prepare b %4.2f ms, solver %4.2f ms)\n",
+           time_updatex, time_updatex_prepareA, time_updatex_prepareb, time_updatex_solver);
+    printf("Update Y %4.2f ms (prepare A %4.2f ms, prepare b %4.2f ms, solver %4.2f ms)\n",
+           time_updatey, time_updatey_prepareA, time_updatey_prepareb, time_updatey_solver);
+    printf("Validate %4.2f ms\n", time_validate);
+    del_vector(r);
+    del_vector(rp);
+    free(one_base_index);
+    del_csr(csc);
+}
+
+int main(int argc, char **argv) {
+    // parameters
+    int f = atoi(argv[2]);
+
+    char *filename = argv[1];
+    printf("filename = %s\n", filename);
+
+    csr_matrix*csr = load_mtx(filename);
+    printf("The order of the rating matrix R is %lu by %lu, #nonzeros = %lu\n",
+           csr->m, csr->n, csr->nnz);
+
+    printf("The latent feature is %i \n", f);
+    float *X = (float *) malloc(sizeof(float) * csr->m * f);
+    memset(X, 0, sizeof(float) * csr->m * f);
+    float *Y = (float *) malloc(sizeof(float) * csr->n * f);
+    for (int i = 0; i < csr->n * f; ++i) Y[i] = 1;
+    float lamda = 0.1;
+    als_recsys(csr, X, Y, f, lamda);
+
+    free(X), free(Y);
+    del_csr(csr);
+}
