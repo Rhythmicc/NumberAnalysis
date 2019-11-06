@@ -1,0 +1,280 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <sys/time.h>
+#include "mmio_highlevel.h"
+#include "csr_sparse.h"
+#include <pthread.h>
+
+void matvec(float *A, float *x, float *y, int m, int n) {
+    for (int i = 0; i < m; i++) {
+        y[i] = 0;
+        for (int j = 0; j < n; j++)
+            y[i] += A[i * n + j] * x[j];
+    }
+}
+
+void matmat(float *C, float *A, float *B, int m, int k, int n) {
+    memset(C, 0, sizeof(float) * m * n);
+    for (int i = 0; i < m; i++)
+        for (int j = 0; j < n; j++)
+            for (int kk = 0; kk < k; kk++)
+                C[i * n + j] += A[i * k + kk] * B[kk * n + j];
+}
+
+void matmat_transB(float *C, float *A, float *BT, int m, int k, int n) {
+    memset(C, 0, sizeof(float) * m * n);
+    for (int i = 0; i < m; i++)
+        for (int j = 0; j < n; j++)
+            for (int kk = 0; kk < k; kk++)
+                C[i * n + j] += A[i * k + kk] * BT[j * k + kk];
+}
+
+float dotproduct(float *vec1, float *vec2, int n) {
+    float result = 0;
+    for (int i = 0; i < n; i++)
+        result += vec1[i] * vec2[i];
+    return result;
+}
+
+// A is m x n, AT is n x m
+void transpose(float *AT, float *A, int m, int n) {
+    for (int i = 0; i < m; i++)
+        for (int j = 0; j < n; j++)
+            AT[j * m + i] = A[i * n + j];
+}
+
+float vec2norm(float *x, int n) {
+    float sum = 0;
+    for (int i = 0; i < n; i++)
+        sum += x[i] * x[i];
+    return sqrt(sum);
+}
+
+void cg(float *A, float *x, float *b, int n, int *iter, int maxiter, float threshold) {
+    size_t sz = sizeof(float) * n;
+    memset(x, 0, sz);
+    float *residual = malloc(sz), *y = malloc(sz), *p = malloc(sz), *q = malloc(sz);
+    *iter = 0;
+    float rho = 0, rho_1 = 0;
+    matvec(A, x, y, n, n);
+    for (int i = 0; i < n; ++i)residual[i] = b[i] - y[i];
+    do {
+        rho = dotproduct(residual, residual, n);
+        if (sqrt(rho) < threshold)break;
+        if (*iter) {
+            float beta = rho / rho_1;
+            for (int i = 0; i < n; ++i)p[i] = residual[i] + beta * p[i];
+        } else memcpy(p, residual, sz);
+        matvec(A, p, q, n, n);
+        float alpha = rho / dotproduct(p, q, n);
+        if (isnormal(alpha)) {
+            for (int i = 0; i < n; ++i)x[i] += alpha * p[i];
+            for (int i = 0; i < n; ++i)residual[i] -= alpha * q[i];
+        }
+        rho_1 = rho;
+        //if (vec2norm(residual,n) < threshold)break;
+    } while (++(*iter) < maxiter);
+    free(residual), free(y), free(p), free(q);
+}
+
+void updateX_recsys(csr_matrix *csr, float *X, float *Y, int m, int n, int f, float lamda,
+                    double *time_prepareA, double *time_prepareb, double *time_solver) {
+    struct timeval t1, t2;
+
+    // malloc smat (A) and svec (b)
+    float *smat = (float *) malloc(sizeof(float) * f * f);
+    float *svec = (float *) malloc(sizeof(float) * f);
+    int mxnzr = 0;
+    anyrow_of_csr(csr, i)mxnzr = max(mxnzr, (*i)->len);
+    float *sY = (float *) malloc(sizeof(float) * mxnzr * f);
+    float *sYT = (float *) malloc(sizeof(float) * mxnzr * f);
+    float *ru = (float *) malloc(sizeof(float) * mxnzr);
+
+
+    anyrow_of_csr(csr, u) {
+        gettimeofday(&t1, NULL);
+        float *xu = X + indx_of_iter(csr, u) * f;
+        vector *this_vec = *u;
+        // find nzr (i.e., #nonzeros in the uth row of R)
+        int nzr = this_vec->len;
+
+        // malloc ru (i.e., uth row of R) and insert entries into it
+        float *rup = ru;
+        int count = 0;
+        any_of_vector(this_vec, j)*(rup++) = j->val;
+
+        // fill sY, according to the sparsity of the uth row of R
+        any_of_vector(this_vec, j)memcpy(&sY[(count++) * f], &Y[j->id * f], sizeof(float) * f);
+
+        // transpose sY to sYT
+        transpose(sYT, sY, nzr, f);
+
+        // multiply sYT and sY, and plus lamda * I
+        matmat(smat, sYT, sY, f, nzr, f);
+        for (int i = 0; i < f; ++i)
+            smat[i * f + i] += lamda;
+
+        gettimeofday(&t2, NULL);
+        *time_prepareA += (t2.tv_sec - t1.tv_sec) * 1000.0 + (t2.tv_usec - t1.tv_usec) / 1000.0;
+
+        // compute b (i.e., svec) by multiplying sYT and the uth row of R
+        gettimeofday(&t1, NULL);
+        matvec(sYT, ru, svec, f, nzr);
+        gettimeofday(&t2, NULL);
+        *time_prepareb += (t2.tv_sec - t1.tv_sec) * 1000.0 + (t2.tv_usec - t1.tv_usec) / 1000.0;
+
+        // solve the system of Ax=b, and get x = the uth row of X
+        gettimeofday(&t1, NULL);
+        int cgiter = 0;
+        cg(smat, xu, svec, f, &cgiter, 100, 0.00001);
+        gettimeofday(&t2, NULL);
+        *time_solver += (t2.tv_sec - t1.tv_sec) * 1000.0 + (t2.tv_usec - t1.tv_usec) / 1000.0;
+    }
+    free(ru), free(sY), free(sYT), free(smat), free(svec);
+}
+
+void updateY_recsys(csr_matrix *csc, float *X, float *Y, int m, int n, int f, float lamda,
+                    double *time_prepareA, double *time_prepareb, double *time_solver) {
+    struct timeval t1, t2;
+
+    float *smat = (float *) malloc(sizeof(float) * f * f);
+    float *svec = (float *) malloc(sizeof(float) * f);
+    int mxnzc = 0;
+    anyrow_of_csr(csc, i)mxnzc = max(mxnzc, (*i)->len);
+    float *sX = (float *) malloc(sizeof(float) * mxnzc * f);
+    float *sXT = (float *) malloc(sizeof(float) * mxnzc * f);
+    float *ri = (float *) malloc(sizeof(float) * mxnzc);
+
+    anyrow_of_csr(csc, i) {
+        gettimeofday(&t1, NULL);
+        float *yi = Y + indx_of_iter(csc, i) * f;
+        vector *this_vec = *i;
+        int nzc = this_vec->len;
+
+        float *rip = ri;
+        int count = 0;
+        any_of_vector(this_vec, j)*(rip++) = j->val;
+        any_of_vector(this_vec, j)memcpy(&sX[(count++) * f], &X[j->id * f], sizeof(float) * f);
+
+        transpose(sXT, sX, nzc, f);
+        matmat(smat, sXT, sX, f, nzc, f);
+        for (int j = 0; j < f; j++)
+            smat[j * f + j] += lamda;
+
+        gettimeofday(&t2, NULL);
+        *time_prepareA += (t2.tv_sec - t1.tv_sec) * 1000.0 + (t2.tv_usec - t1.tv_usec) / 1000.0;
+
+        gettimeofday(&t1, NULL);
+        matvec(sXT, ri, svec, f, nzc);
+        gettimeofday(&t2, NULL);
+        *time_prepareb += (t2.tv_sec - t1.tv_sec) * 1000.0 + (t2.tv_usec - t1.tv_usec) / 1000.0;
+
+        gettimeofday(&t1, NULL);
+        int cgiter = 0;
+        cg(smat, yi, svec, f, &cgiter, 100, 0.00001);
+        gettimeofday(&t2, NULL);
+        *time_solver += (t2.tv_sec - t1.tv_sec) * 1000.0 + (t2.tv_usec - t1.tv_usec) / 1000.0;
+    }
+    free(smat), free(svec), free(sX), free(sXT), free(ri);
+}
+/// __TEMPLATE__
+
+void als_recsys(csr_matrix *csr, float *X, float *Y, int m, int n, int f, float lamda) {
+    // create YT and Rp
+    csr_matrix *csc = new_csr_matrix(n, m);
+    csr_transpose(csc, csr);
+
+    vector *r = new_vector();
+    csr_to_vec(csr, r);
+    vector *rp = new_vector();
+    MALLOC(one_base_index, ul, csr->nnz + 1);
+    anyrow_of_csr(csr, i)any_of_vector((*i), j)one_base_index[++one_base_index[0]] = indx_of_iter(csr, i) * n + (j->id);
+
+    int iter = 0, nnz = csr->nnz;
+    float error;
+    float error_old = 0.0;
+    float error_new;
+    struct timeval t1, t2;
+
+    double time_updatex_prepareA = 0;
+    double time_updatex_prepareb = 0;
+    double time_updatex_solver = 0;
+
+    double time_updatey_prepareA = 0;
+    double time_updatey_prepareb = 0;
+    double time_updatey_solver = 0;
+
+    double time_updatex = 0;
+    double time_updatey = 0;
+    double time_validate = 0;
+
+    do {
+        // step 1. update X
+        gettimeofday(&t1, NULL);
+        updateX_recsys(csr, X, Y, m, n, f, lamda, &time_updatex_prepareA, &time_updatex_prepareb, &time_updatex_solver);
+        gettimeofday(&t2, NULL);
+        time_updatex += (t2.tv_sec - t1.tv_sec) * 1000.0 + (t2.tv_usec - t1.tv_usec) / 1000.0;
+
+        // step 2. update Y
+        gettimeofday(&t1, NULL);
+        updateY_recsys(csc, X, Y, m, n, f, lamda, &time_updatey_prepareA, &time_updatey_prepareb, &time_updatey_solver);
+        gettimeofday(&t2, NULL);
+        time_updatey += (t2.tv_sec - t1.tv_sec) * 1000.0 + (t2.tv_usec - t1.tv_usec) / 1000.0;
+
+        // step 3. validate
+        // step 3-1. matrix multiplication
+        gettimeofday(&t1, NULL);
+        matmat_transB_to_vec(rp, X, Y, m, f, n, one_base_index);
+        pair *rv = r->src, *rpv = rp->src;
+        int cnt = r->len;
+        error_new = 0.0;
+        // step 3-2. calculate error
+        while (cnt--) {
+            VALUE_TYPE val = rpv->val - rv->val;
+            error_new += val * val;
+            ++rv;
+            ++rpv;
+        }
+        error_new = sqrt(error_new / nnz);
+        gettimeofday(&t2, NULL);
+        time_validate += (t2.tv_sec - t1.tv_sec) * 1000.0 + (t2.tv_usec - t1.tv_usec) / 1000.0;
+        error = fabs(error_new - error_old) / error_new;
+        error_old = error_new;
+        printf("iter = %i, error = %f\n", iter, error);
+        iter++;
+    } while (iter < 1000 && error > 0.0001);
+
+    printf("\nUpdate X %4.2f ms (prepare A %4.2f ms, prepare b %4.2f ms, solver %4.2f ms)\n",
+           time_updatex, time_updatex_prepareA, time_updatex_prepareb, time_updatex_solver);
+    printf("Update Y %4.2f ms (prepare A %4.2f ms, prepare b %4.2f ms, solver %4.2f ms)\n",
+           time_updatey, time_updatey_prepareA, time_updatey_prepareb, time_updatey_solver);
+    printf("Validate %4.2f ms\n", time_validate);
+    del_vector(r);
+    del_vector(rp);
+    free(one_base_index);
+    del_csr(csc);
+}
+
+int main(int argc, char **argv) {
+    int f = atoi(argv[2]);
+
+    char *filename = argv[1];
+    printf("filename = %s\n", filename);
+
+    csr_matrix*csr = load_mtx(filename);
+    printf("The order of the rating matrix R is %lu by %lu, #nonzeros = %lu\n",
+           csr->m, csr->n, csr->nnz);
+
+    printf("The latent feature is %i \n", f);
+    float *X = (float *) malloc(sizeof(float) * csr->m * f);
+    memset(X, 0, sizeof(float) * csr->m * f);
+    float *Y = (float *) malloc(sizeof(float) * csr->n * f);
+    for (int i = 0; i < csr->n * f; ++i) Y[i] = 1;
+    float lamda = 0.1;
+    als_recsys(csr, X, Y,csr->m, csr->n, f, lamda);
+
+    free(X), free(Y);
+    del_csr(csr);
+}
