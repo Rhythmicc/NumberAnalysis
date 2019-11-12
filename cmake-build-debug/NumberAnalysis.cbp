@@ -118,6 +118,9 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/Users/lianhaocheng/CLionProjects/NumberAnalysis/final/csr_sparse.h">
+			<Option target="final"/>
+		</Unit>
 		<Unit filename="/Users/lianhaocheng/CLionProjects/NumberAnalysis/final/main.c">
 			<Option target="final"/>
 		</Unit>
