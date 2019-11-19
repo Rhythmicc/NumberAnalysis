@@ -1,0 +1,240 @@
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8449.90 ms
+Update Y	5416.34 ms
+Validate	441.05 ms
+Total use	14307.28 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8385.99 ms
+Update Y	5338.49 ms
+Validate	419.26 ms
+Total use	14143.74 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8075.71 ms
+Update Y	5580.36 ms
+Validate	410.36 ms
+Total use	14066.43 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	7998.99 ms
+Update Y	5390.31 ms
+Validate	431.15 ms
+Total use	13820.45 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8278.99 ms
+Update Y	5284.19 ms
+Validate	421.87 ms
+Total use	13985.04 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8437.92 ms
+Update Y	5288.38 ms
+Validate	448.65 ms
+Total use	14174.96 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8359.54 ms
+Update Y	5381.10 ms
+Validate	474.59 ms
+Total use	14215.23 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8221.16 ms
+Update Y	5396.26 ms
+Validate	431.41 ms
+Total use	14048.83 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8606.28 ms
+Update Y	5408.51 ms
+Validate	419.07 ms
+Total use	14433.85 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8234.77 ms
+Update Y	5433.06 ms
+Validate	479.17 ms
+Total use	14147.00 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8537.90 ms
+Update Y	5350.61 ms
+Validate	408.81 ms
+Total use	14297.33 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8633.23 ms
+Update Y	5494.45 ms
+Validate	466.70 ms
+Total use	14594.37 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8469.01 ms
+Update Y	5370.58 ms
+Validate	441.92 ms
+Total use	14281.51 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8372.80 ms
+Update Y	5464.05 ms
+Validate	450.48 ms
+Total use	14287.33 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8601.07 ms
+Update Y	5401.50 ms
+Validate	434.83 ms
+Total use	14437.40 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8647.69 ms
+Update Y	5570.50 ms
+Validate	444.77 ms
+Total use	14662.96 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8639.69 ms
+Update Y	5451.65 ms
+Validate	421.98 ms
+Total use	14513.32 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8220.75 ms
+Update Y	5496.76 ms
+Validate	462.29 ms
+Total use	14179.80 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8404.02 ms
+Update Y	5549.76 ms
+Validate	455.87 ms
+Total use	14409.65 ms
+filename = ../../netflix.mtx
+The order of the rating matrix R is 480189 by 17770, #nonzeros = 99072112
+The latent feature is 64 
+iter = 0, error = 1.000000, error_new = 0.924153
+iter = 1, error = 0.006516, error_new = 0.918170
+iter = 2, error = 0.000093, error_new = 0.918085
+iter = 3, error = 0.000002, error_new = 0.918083
+
+Update X	8106.76 ms
+Update Y	5354.47 ms
+Validate	438.49 ms
+Total use	13899.73 ms

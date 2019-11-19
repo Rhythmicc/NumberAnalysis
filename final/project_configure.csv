@@ -1,0 +1,6 @@
+compile_tool,gcc -Ofast -std=c11, -lm -fopenmp -frename-registers -fprofile-use -fprofile-correction -funroll-loops
+compile_filename,main.c
+executable_filename,dist/final
+input_file,dist/input.txt
+template_root,template/
+server_target,root@10.16.30.205:Desktop/4group/final/
